@@ -2890,23 +2890,28 @@ public class GriefPrevention extends JavaPlugin
         if (!GriefPrevention.instance.claimsEnabledForWorld(location.getWorld())) return null;
 
         ItemStack placed;
-        if (material.isItem())
-        {
-            placed = new ItemStack(material);
-        }
-        else
-        {
-            var blockType = material.asBlockType();
-            if (blockType != null && blockType.hasItemType())
+        try {
+            if (material.isItem())
             {
-                placed = blockType.getItemType().createItemStack();
+                placed = new ItemStack(material);
             }
             else
             {
-                placed = new ItemStack(Material.DIRT);
+                var blockType = material.asBlockType();
+                if (blockType != null && blockType.hasItemType())
+                {
+                    placed = blockType.getItemType().createItemStack();
+                }
+                else
+                {
+                    placed = new ItemStack(Material.DIRT);
+                }
             }
-        }
-
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("Failed to create ItemStack for " + material + ": " + e.getMessage());
+            placed = new ItemStack(Material.DIRT);
+        }        
+        
         Block block = location.getBlock();
         Supplier<String> result = ProtectionHelper.checkPermission(player, location, ClaimPermission.Build, new BlockPlaceEvent(block, block.getState(), block, placed, player, true, EquipmentSlot.HAND));
         return result == null ? null : result.get();
